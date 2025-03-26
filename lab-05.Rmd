@@ -42,26 +42,102 @@ There are two La Quinta locations in Alaska.
 
 
 ### Exercise 2
+Next we will be calculating the distance between all Denny’s and all La Quinta locations in Alaska.
 
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+How many pairings are there between all Denny’s and all La Quinta locations in Alaska, i.e., how many distances do we need to calculate between the locations of these establishments in Alaska?
+
+3 x 2 = 6
+
+
+Calculate the number of pairings using the data frames you have already made.
+
+```{r combos}
+#Why would I need code for this? dn has 2 observations, lq has 3. Number of pairings is 2 x 3 = 6.
+```
+
 
 ### Exercise 3
+In order to calculate these distances, we need to first restructure our data to pair the Denny’s and La Quinta locations. To do so, we will join the two data frames.
+```{r full_join}
+dn_lq_ak <- full_join(dn_ak, lq_ak, 
+                      by = "state")
+dn_lq_ak
+```
 
-...
 
 ### Exercise 4
+How many observations are in the joined dn_lq_ak data frame? What are the names of the variables in this data frame?
 
-...
+We see in the tibble above that there are 6 observations on 11 variables. One variable, the one that was common between both datasets, is state. The others are a .x and .y version of address, city, zip, longitude, and latitude——the .x versions coming from the dn dataset, indicating Denny's locations, and the .y versions coming from the lq dataset, indicating La Quinta locations.
+
 
 ### Exercise 5
+What function from the tidyverse do we use to add a new variable to a data frame while keeping the existing variables?
 
-...
+mutate( ).
+
+```{r Haversine}
+haversine <- function(long1, lat1, long2, lat2, round = 3) {
+  # convert to radians
+  long1 <- long1 * pi / 180
+  lat1 <- lat1 * pi / 180
+  long2 <- long2 * pi / 180
+  lat2 <- lat2 * pi / 180
+
+  R <- 6371 # Earth mean radius in km
+
+  a <- sin((lat2 - lat1) / 2)^2 + cos(lat1) * cos(lat2) * sin((long2 - long1) / 2)^2
+  d <- R * 2 * asin(sqrt(a))
+
+  return(round(d, round)) # distance in km
+}
+```
+
 
 ### Exercise 6
+Calculate the distances between all pairs of Denny’s and La Quinta locations and save this variable as distance. Make sure to save this variable in THE dn_lq_ak data frame, so that you can use it later.
 
-...
+```{r distances}
+dn_lq_ak <- dn_lq_ak %>% 
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 3))
+```
+
+### Exercise 7
+Calculate the minimum distance between a Denny’s and La Quinta for each Denny’s location. To do so we group by Denny’s locations and calculate a new variable that stores the information for the minimum distance.
+
+```{r min_distance}
+dn_lq_ak_mindist <- dn_lq_ak %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+
+dn_lq_ak_mindist
+```
+
+### Exercise 8
+Describe the distribution of the distances of Denny’s and the nearest La Quinta locations in Alaska. Also include an appropriate visualization and relevant summary statistics.
+
+Well, describing the distribution is pretty easy since there are only three data points. There are three Denny's locations with distances to the nearest La Quinta of 5.20, 2.04, and 6 km.
+
+```{r}
+dn_lq_ak_mindist %>% 
+  ggplot(aes(x = "", y = closest)) +
+  geom_boxplot() +
+  geom_point()
+
+library(ggplot2)
+
+# Create a box plot with labeled data points
+ggplot(dn_lq_ak_mindist, aes(x = "", y = closest)) +
+  geom_boxplot(width = 0.5, fill = "lightblue", alpha = 0.7) +
+  geom_point(size = 3, color = "blue", alpha = 0.7) +
+  # Add text labels for each point
+  geom_text(aes(x = 1.15, label = address.x), hjust = 0, size = 3) +
+  labs(title = "Distances from Denny's to Nearest La Quinta in Alaska",
+       y = "Distance (km)",
+       x = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+```
 
 Add exercise headings as needed.
