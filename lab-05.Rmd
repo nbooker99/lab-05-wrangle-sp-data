@@ -119,13 +119,13 @@ Describe the distribution of the distances of Denny’s and the nearest La Quint
 Well, describing the distribution is pretty easy since there are only three data points. There are three Denny's locations with distances to the nearest La Quinta of 5.20, 2.04, and 6 km.
 
 ```{r}
+#Here is what I came up with on my own (except that Claude.ai helped me figure out I needed to put x = "" to get geom_point( ) to work).
 dn_lq_ak_mindist %>% 
   ggplot(aes(x = "", y = closest)) +
   geom_boxplot() +
   geom_point()
 
-library(ggplot2)
-
+#Claude helped much more with this version.
 # Create a box plot with labeled data points
 ggplot(dn_lq_ak_mindist, aes(x = "", y = closest)) +
   geom_boxplot(width = 0.5, fill = "lightblue", alpha = 0.7) +
@@ -138,6 +138,178 @@ ggplot(dn_lq_ak_mindist, aes(x = "", y = closest)) +
   theme_minimal() +
   theme(axis.text.x = element_blank(),
         axis.ticks.x = element_blank())
+
+#Relevant summary statistics.
+dn_lq_ak_mindist %>%
+  pull(closest) %>%
+  summary()
 ```
 
-Add exercise headings as needed.
+### Exercise 9
+Repeat the same analysis for North Carolina: (i) filter Denny’s and La Quinta Data Frames for NC, (ii) join these data frames to get a complete list of all possible pairings, (iii) calculate the distances between all possible pairings of Denny’s and La Quinta in NC, (iv) find the minimum distance between each Denny’s and La Quinta location, (v) visualize and describe the distribution of these shortest distances using appropriate summary statistics.
+
+```{r NC}
+dn_nc <- dn %>%
+  filter(state == "NC")
+
+lq_nc <- lq %>% 
+  filter(state == "NC")
+
+dn_lq_nc <- full_join(dn_nc, lq_nc, 
+                      by = "state")
+
+dn_lq_nc <- dn_lq_nc %>% 
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 3))
+
+dn_lq_nc_mindist <- dn_lq_nc %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+
+dn_lq_nc_mindist %>% 
+  ggplot(aes(x = "", y = closest)) +
+    geom_boxplot(width = 0.5, fill = "lightblue", alpha = 0.7) +
+    geom_point(size = 3, color = "blue", alpha = 0.7) +
+    labs(title = "Distances from Denny's to Nearest La Quinta in North Carolina",
+       y = "Distance (km)",
+       x = "") +
+    theme_minimal() +
+    theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+dn_lq_nc_mindist %>%
+  pull(closest) %>%
+  summary()
+```
+
+### Exercise 10
+Repeat the same analysis for Texas.
+```{r TX}
+dn_tx <- dn %>%
+  filter(state == "TX")
+
+lq_tx <- lq %>% 
+  filter(state == "TX")
+
+dn_lq_tx <- full_join(dn_tx, lq_tx, 
+                      by = "state")
+
+dn_lq_tx <- dn_lq_tx %>% 
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 3))
+
+dn_lq_tx_mindist <- dn_lq_tx %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+
+ggplot(dn_lq_tx_mindist, aes(x = "", y = closest)) +
+  geom_boxplot(width = 0.5, fill = "lightblue", alpha = 0.7) +
+  geom_point(size = 3, color = "blue", alpha = 0.7) +
+  labs(title = "Distances from Denny's to Nearest La Quinta in Texas",
+       y = "Distance (km)",
+       x = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+dn_lq_tx_mindist %>%
+  pull(closest) %>%
+  summary()
+```
+
+
+### Exercise 11
+Repeat the same analysis for a state of your choosing, different than the ones we covered so far.
+```{r LA}
+dn_la <- dn %>%
+  filter(state == "LA")
+
+lq_la <- lq %>% 
+  filter(state == "LA")
+
+dn_lq_la <- full_join(dn_la, lq_la, 
+                      by = "state")
+
+dn_lq_la <- dn_lq_la %>% 
+  mutate(distance = haversine(longitude.x, latitude.x, longitude.y, latitude.y, round = 3))
+
+dn_lq_la_mindist <- dn_lq_la %>%
+  group_by(address.x) %>%
+  summarize(closest = min(distance))
+
+ggplot(dn_lq_la_mindist, aes(x = "", y = closest)) +
+  geom_boxplot(width = 0.5, fill = "lightblue", alpha = 0.7) +
+  geom_point(size = 3, color = "blue", alpha = 0.7) +
+  labs(title = "Distances from Denny's to Nearest La Quinta in Louisiana",
+       y = "Distance (km)",
+       x = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+dn_lq_la_mindist %>%
+  pull(closest) %>%
+  summary()
+```
+
+### Exercise 12
+Among the states you examined, where is Mitch Hedberg’s joke most likely to hold true? Explain your reasoning.
+
+```{r summaries}
+dn_lq_ak_mindist %>%
+  pull(closest) %>%
+  summary()
+dn_lq_nc_mindist %>%
+  pull(closest) %>%
+  summary()
+dn_lq_tx_mindist %>%
+  pull(closest) %>%
+  summary()
+dn_lq_la_mindist %>%
+  pull(closest) %>%
+  summary()
+```
+
+Based on the summary statistics, it seems to me that the states that are in competition are Alaska, Texas, and Louisiana (North Carolina seems way off from what we would expect by looking at the other states). Alaska has the lowest mean, followed by Louisian, and then Texas. However, to make better comparisons, I'll compare the boxplots.
+
+```{r plotting_to_compare}
+dn_lq_ak_mindist <- dn_lq_ak_mindist %>% 
+  mutate(state = "Alaska")
+
+dn_lq_tx_mindist <- dn_lq_tx_mindist %>% 
+  mutate(state = "Texas")
+
+dn_lq_la_mindist <- dn_lq_la_mindist %>% 
+  mutate(state = "Louisiana")
+
+dn_lq_mindist_ak_tx <- full_join(
+  dn_lq_ak_mindist,
+  dn_lq_tx_mindist)
+
+dn_lq_mindist_ak_tx_la <- full_join(
+  dn_lq_mindist_ak_tx,
+  dn_lq_la_mindist)
+  
+ggplot(dn_lq_mindist_ak_tx_la, aes(x = "", y = closest)) +
+  geom_boxplot(width = 0.5, fill = "lightblue", alpha = 0.7) +
+  geom_point(size = 2, color = "blue", alpha = 0.7) +
+  facet_wrap(~state) +
+  labs(title = "Distances from Denny's to Nearest La Quinta",
+       y = "Distance (km)",
+       x = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+#Replace geom_point with geom_jitter to get a better sense of the number of points on the texas plot.
+ggplot(dn_lq_mindist_ak_tx_la, aes(x = "", y = closest)) +
+  geom_boxplot(width = 0.5, fill = "lightblue", alpha = 0.7) +
+  geom_jitter(width = 0.03, height = 0, size = 2, color = "blue", alpha = 0.7) +
+  facet_wrap(~state) +
+  labs(title = "Distances from Denny's to Nearest La Quinta",
+       y = "Distance (km)",
+       x = "") +
+  theme_minimal() +
+  theme(axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+```
+
+Based on a comparison of the boxplots, it seems that the joke holds most true in Texas. It has the lowest median and by far the most numerous Denny's locations that have a distance to the closest La Quinta that is below ~3 km.
